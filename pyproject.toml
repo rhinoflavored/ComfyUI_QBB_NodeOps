@@ -1,0 +1,22 @@
+[project]
+name = "qbb-loadhighlight"
+description = "Highlight each custom node load in the terminal, and show hard/partial import failures in a ComfyUI popup with export tools."
+version = "1.0.0"
+license = { file = "LICENSE" }
+requires-python = ">=3.9"
+dependencies = []
+classifiers = [
+    "Operating System :: OS Independent",
+]
+
+[project.urls]
+# TODO: replace YOUR_GITHUB_USERNAME after creating the GitHub repository
+Repository = "https://github.com/YOUR_GITHUB_USERNAME/ComfyUI_QBB_LoadHighlight"
+"Bug Tracker" = "https://github.com/YOUR_GITHUB_USERNAME/ComfyUI_QBB_LoadHighlight/issues"
+
+[tool.comfy]
+# TODO: replace with your Publisher ID from https://registry.comfy.org (the id after @)
+PublisherId = "YOUR_PUBLISHER_ID"
+DisplayName = "QBB LoadHighlight"
+Icon = ""
+requires-comfyui = ">=0.3.0"
