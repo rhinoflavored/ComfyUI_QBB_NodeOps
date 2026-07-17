@@ -16,7 +16,7 @@ UI 文案会跟随 ComfyUI 语言设置（`Comfy.Locale`）：中文界面显示
 
 ```bash
 cd ComfyUI/custom_nodes
-git clone https://github.com/YOUR_GITHUB_USERNAME/ComfyUI_QBB_LoadHighlight.git
+git clone https://github.com/rhinoflavored/ComfyUI_QBB_LoadHighlight.git
 ```
 
 Then restart ComfyUI.
