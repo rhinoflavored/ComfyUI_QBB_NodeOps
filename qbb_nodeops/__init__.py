@@ -1,4 +1,4 @@
-"""ComfyUI_QBB_LoadHighlight core package."""
+"""QBB NodeOps core package."""
 
 from .store import REPORT
 

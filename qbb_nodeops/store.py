@@ -69,7 +69,7 @@ class LoadReport:
         from datetime import datetime
 
         lines: list[str] = []
-        lines.append("ComfyUI_QBB_LoadHighlight - Full Custom Node Load Log")
+        lines.append("QBB NodeOps - Full Custom Node Load Log")
         lines.append(f"Generated: {datetime.now().isoformat(timespec='seconds')}")
         lines.append(f"Hook installed: {self.hook_installed}")
         lines.append(

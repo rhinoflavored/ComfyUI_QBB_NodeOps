@@ -16,6 +16,12 @@ _ROOT = os.path.dirname(os.path.abspath(__file__))
 if _ROOT not in sys.path:
     sys.path.insert(0, _ROOT)
 
-from qbb_loadhighlight.hook import install  # noqa: E402
+from qbb_nodeops.settings import apply_comfyui_process_proxy, load_settings  # noqa: E402
+from qbb_nodeops.hook import install  # noqa: E402
+
+# This runs before `nodes` and all custom nodes are imported, so a saved local
+# proxy is inherited by the whole ComfyUI process and later subprocesses.
+if apply_comfyui_process_proxy(load_settings()):
+    print("[ComfyUI_QBB_NodeOps] Applied saved proxy to the ComfyUI process", flush=True)
 
 install()

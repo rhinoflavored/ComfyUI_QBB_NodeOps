@@ -1,7 +1,7 @@
 [project]
-name = "qbb-loadhighlight"
-description = "Highlight each custom node load in the terminal, and show hard/partial import failures in a ComfyUI popup with export tools."
-version = "1.0.0"
+name = "qbb-nodeops"
+description = "QBB NodeOps: inspect custom-node loading, updates, dependencies, and safely migrate selected nodes to a new portable ComfyUI environment."
+version = "2.1.0"
 license = { file = "LICENSE" }
 requires-python = ">=3.9"
 dependencies = []
@@ -10,11 +10,11 @@ classifiers = [
 ]
 
 [project.urls]
-Repository = "https://github.com/rhinoflavored/ComfyUI_QBB_LoadHighlight"
-"Bug Tracker" = "https://github.com/rhinoflavored/ComfyUI_QBB_LoadHighlight/issues"
+Repository = "https://github.com/rhinoflavored/ComfyUI_QBB_NodeOps"
+"Bug Tracker" = "https://github.com/rhinoflavored/ComfyUI_QBB_NodeOps/issues"
 
 [tool.comfy]
 PublisherId = "rhinoflavored"
-DisplayName = "QBB LoadHighlight"
+DisplayName = "QBB NodeOps"
 Icon = ""
 requires-comfyui = ">=0.3.0"

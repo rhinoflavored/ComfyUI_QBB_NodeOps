@@ -72,7 +72,7 @@ def build_environment_report() -> str:
     meta = _package_meta()
     freeze_text, freeze_err = _run_pip_freeze()
     lines: list[str] = []
-    lines.append("ComfyUI_QBB_LoadHighlight - Environment Dependencies Export")
+    lines.append("QBB NodeOps - Environment Dependencies Export")
     lines.append(f"Generated: {datetime.now().isoformat(timespec='seconds')}")
     lines.append("=" * 72)
     lines.append("RUNTIME")

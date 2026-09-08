@@ -28,7 +28,7 @@ def _display_name(module_path: str) -> str:
 def _is_self(module_path: str) -> bool:
     try:
         base = os.path.basename(module_path.rstrip("\\/"))
-        if "QBB_LoadHighlight" in base or base.lower() == "loadhighlight":
+        if "QBB_NodeOps" in base or base.lower() == "nodeops":
             return True
         real_target = os.path.realpath(module_path)
         real_root = os.path.realpath(PLUGIN_ROOT)
@@ -369,7 +369,7 @@ def patch_nodes_module(nodes_module: Any) -> bool:
     _PATCHED = True
     REPORT.hook_installed = True
     print(
-        f"[ComfyUI_QBB_LoadHighlight] Hooked nodes.load_custom_node "
+        f"[QBB NodeOps] Hooked nodes.load_custom_node "
         f"({'async' if inspect.iscoroutinefunction(original) else 'sync'})",
         flush=True,
     )
@@ -391,7 +391,7 @@ def _import_hook(name, globals=None, locals=None, fromlist=(), level=0):
         elif fromlist and name == "nodes":
             patch_nodes_module(module)
     except Exception as e:
-        print(f"[ComfyUI_QBB_LoadHighlight] Failed to patch nodes: {e}", flush=True)
+        print(f"[QBB NodeOps] Failed to patch nodes: {e}", flush=True)
     return module
 
 
@@ -407,7 +407,7 @@ def install() -> None:
         builtins.__import__ = _import_hook
         _IMPORT_HOOKED = True
         print(
-            "[ComfyUI_QBB_LoadHighlight] Import hook installed "
+            "[QBB NodeOps] Import hook installed "
             "(will patch nodes.load_custom_node when nodes is imported)",
             flush=True,
         )

@@ -9,3 +9,4 @@ venv/
 *.egg-info/
 dist/
 build/
+qbb_network_settings.json
