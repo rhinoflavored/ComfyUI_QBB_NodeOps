@@ -2,7 +2,7 @@
 
 > Previous name: `ComfyUI_QBB_LoadHighlight`. This release uses the new **QBB NodeOps** folder, package, API and display names.
 
-启动时在终端高亮每个自定义节点的加载过程，并在浏览器弹窗提示加载失败 / 部分失败的插件。
+QBB NodeOps 是一个面向 ComfyUI 自定义节点的运维工具：在启动时高亮加载过程，集中展示加载问题与更新，并提供插件搬家、环境导出、热点推送等功能。
 
 UI 文案会跟随 ComfyUI 语言设置（`Comfy.Locale`）：中文界面显示中文，其它语言显示英文。
 
@@ -36,19 +36,19 @@ After restart, the terminal should show:
 [QBB NodeOps] Hooked nodes.load_custom_node ...
 ```
 
-## Features
+## 功能
 
 - 终端：每个插件加载前打印黄色高亮插件名 + 分割线
 - 终端：失败时红色显示原因与 Traceback；部分失败标为 `[PARTIAL]`
 - 终端：启动结束后打印 SUMMARY（成功 / 部分失败 / 完全失败）
-- UI：失败时自动弹窗；顶栏按钮可随时重开报告
-- UI：启动后后台检查已安装 git 插件的远程更新（多为 GitHub），有更新则弹窗提示
-- UI：顶栏「插件检查」按钮（加载问题 + 可更新列表同弹窗）；支持单项更新 / 一键全部更新（`git pull --ff-only`）
-- UI：网络设置（本地 VPN 代理端口 / 无代理时国内 GitHub 镜像）加速更新检查
-- UI：导出完整加载日志、导出环境依赖（pip freeze 等）
-- UI：单条问题复制图标 / 复制所有问题
-- UI：中英随 ComfyUI 语言切换
-- 菜单分类：**QBB → LoadHighlight**
+- 插件检查：失败时自动提示，也能从 ComfyUI 顶栏随时打开；加载问题与可更新插件集中管理。
+- 插件更新：检查已安装 Git 插件的远程更新；支持单项更新与一键更新（`git pull --ff-only`）。
+- 网络设置：三选一使用直连、本地代理或国内镜像；用于 QBB NodeOps 的联网检查与更新请求，不会开启系统全局代理或 TUN 模式。
+- 实例与插件搬家：识别多个 ComfyUI 实例，在实例间选择插件迁移；可为便携版创建轻量新环境，并让模型继续复用原目录。
+- 导出：下载完整加载日志，或导出当前 Python 环境依赖（如 `pip freeze`）；由浏览器保存文件，插件不会把文件写入任意服务器路径。
+- AI 设置与热点推送：可配置 OpenAI 兼容 API，用于分析加载错误与整理 ComfyUI/AI 热点。API Key 仅保存在本机插件配置中，不会回传到前端。
+- UI：单条问题复制、复制所有问题，以及随 ComfyUI 语言自动显示中英文。
+- 菜单分类：**QBB → NodeOps**
 
 ## Why it does not rely on folder name order
 
@@ -60,23 +60,23 @@ This plugin installs an import hook there and patches `nodes.load_custom_node`, 
 Many packs swallow per-node import errors with `try/except` and still return success.
 During each pack load, this plugin captures stdout/stderr/logging and marks `partial` when strong signals appear (Traceback / ImportError / failed to load, etc.).
 
-## Category (QBB)
+## 分类（QBB）
 
-Menu path: **QBB → LoadHighlight**
+菜单路径：**QBB → NodeOps**
 
 Future QBB plugins can use the same top-level menu:
 
-- Menu: `path: ["QBB", "YourPlugin"]`
+- 菜单：`path: ["QBB", "YourPlugin"]`
 - Nodes: `CATEGORY = "QBB/YourPlugin"`
 
-## Language
+## 语言
 
 Settings → `Comfy > Locale > Language`
 
 - Chinese (`zh` / `zh-CN` ...) → Chinese UI
 - Other locales → English UI
 
-## API
+## API（主要接口）
 
 - `GET /qbb_nodeops/report`
 - `GET /qbb_nodeops/failures`
@@ -85,12 +85,13 @@ Settings → `Comfy > Locale > Language`
 - `GET /qbb_nodeops/updates`
 - `POST /qbb_nodeops/updates/refresh`
 - `POST /qbb_nodeops/updates/pull` (`{ "path": "..." }` / `{ "paths": [...] }` / `{ "all": true }`)
-- `GET /qbb_nodeops/export_defaults?kind=log|deps`
-- `POST /qbb_nodeops/export_to_path`
-- `POST /qbb_nodeops/export_environment_to_path`
+- `GET /qbb_nodeops/export?filename=...`
+- `GET /qbb_nodeops/environment?filename=...`
 
 ## Notes
 
 - Tracks `custom_nodes` packages only (not `comfy_extras` spam)
 - Skips highlighting itself
 - No extra pip dependencies
+- 插件搬家会先复制并保留原插件；只有在用户明确确认且迁移成功后才会删除源插件。
+- 新建便携式实例需要当前安装为 ComfyUI Portable；普通 Python 环境可以作为既有实例纳入管理与迁移。
