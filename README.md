@@ -1,97 +1,67 @@
 # QBB NodeOps for ComfyUI
 
-> Previous name: `ComfyUI_QBB_LoadHighlight`. This release uses the new **QBB NodeOps** folder, package, API and display names.
+**在一个面板里排查插件加载、管理资源、保存环境版本和维护多个 ComfyUI 实例。**
 
-QBB NodeOps 是一个面向 ComfyUI 自定义节点的运维工具：在启动时高亮加载过程，集中展示加载问题与更新，并提供插件搬家、环境导出、热点推送等功能。
+[English](README.en.md) · [使用指南](docs/usage.md) · [更新说明](CHANGELOG.md) · [问题反馈](https://github.com/rhinoflavored/ComfyUI_QBB_NodeOps/issues)
 
-UI 文案会跟随 ComfyUI 语言设置（`Comfy.Locale`）：中文界面显示中文，其它语言显示英文。
-
-## Install via ComfyUI-Manager
-
-1. Open **ComfyUI-Manager**
-2. Search for **QBB NodeOps** (or `qbb-nodeops`)
-3. Click **Install**, then restart ComfyUI
-
-> If it does not appear yet, the node may still be pending Registry indexing. You can install from Git URL instead (see below).
-
-## Install from Git
-
-```bash
-cd ComfyUI/custom_nodes
-git clone https://github.com/rhinoflavored/ComfyUI_QBB_NodeOps.git
-```
-
-Then restart ComfyUI.
-
-Manual / junction install:
-
-```powershell
-cmd /c mklink /J "你的ComfyUI路径\custom_nodes\ComfyUI_QBB_NodeOps" "C:\Users\QT\Desktop\ComfyUI_QBB_NodeOps"
-```
-
-After restart, the terminal should show:
-
-```text
-[QBB NodeOps] Import hook installed ...
-[QBB NodeOps] Hooked nodes.load_custom_node ...
-```
+QBB NodeOps 提供 ComfyUI 网页管理界面与启动诊断，不向工作流添加节点。界面跟随 ComfyUI 语言设置显示中文或英文。项目原名为 **ComfyUI_QBB_LoadHighlight**。
 
 ## 功能
 
-- 终端：每个插件加载前打印黄色高亮插件名 + 分割线
-- 终端：失败时红色显示原因与 Traceback；部分失败标为 `[PARTIAL]`
-- 终端：启动结束后打印 SUMMARY（成功 / 部分失败 / 完全失败）
-- 插件检查：失败时自动提示，也能从 ComfyUI 顶栏随时打开；加载问题与可更新插件集中管理。
-- 插件更新：检查已安装 Git 插件的远程更新；支持单项更新与一键更新（`git pull --ff-only`）。
-- 网络设置：三选一使用直连、本地代理或国内镜像；用于 QBB NodeOps 的联网检查与更新请求，不会开启系统全局代理或 TUN 模式。
-- 实例与插件搬家：识别多个 ComfyUI 实例，在实例间选择插件迁移；可为便携版创建轻量新环境，并让模型继续复用原目录。
-- 导出：下载完整加载日志，或导出当前 Python 环境依赖（如 `pip freeze`）；由浏览器保存文件，插件不会把文件写入任意服务器路径。
-- AI 设置与热点推送：可配置 OpenAI 兼容 API，用于分析加载错误与整理 ComfyUI/AI 热点。API Key 仅保存在本机插件配置中，不会回传到前端。
-- UI：单条问题复制、复制所有问题，以及随 ComfyUI 语言自动显示中英文。
-- 菜单分类：**QBB → NodeOps**
+- **插件管理**：查看正常、部分加载和失败状态、错误与 Traceback；检查 Git 更新，执行单项或批量快进更新；导出日志和依赖清单。
+- **资源管理**：查看插件、模型的磁盘占用、文件时间及已记录的工作流引用，筛选后移入回收站。
+- **版本记录**：预览并保存受管环境，比较当前状态，导入/导出清单和文件包，按确认计划恢复当前实例。
+- **创建实例**：从官方仓库建立独立 ComfyUI，选择 Python、PyTorch 和 CPU/CUDA 组合，检查本机硬件与安装结果。
+- **插件搬家**：向已有实例复制插件，用目标 Python 安装及检查依赖；验证后可确认回收来源插件。
+- **插件市场**：搜索公开插件目录，按分类和标签筛选，查看仓库信息或通过 Git 地址下载。
+- **可选 AI 分析**：手动连接远程或本地 OpenAI 兼容服务，分析诊断信息。
 
-## Why it does not rely on folder name order
+## 安装
 
-ComfyUI runs each custom node's `prestartup_script.py` before importing `nodes`.
-This plugin installs an import hook there and patches `nodes.load_custom_node`, so it does **not** need a `00-` folder prefix.
+需要可运行的 ComfyUI、**Python 3.11+**，以及供仓库下载和更新使用的系统 **Git**。主要开发与验证环境为 Windows，其他系统和插件组合需要实际验证。
 
-## Partial failure detection
+在 ComfyUI 的 `custom_nodes` 目录执行：
 
-Many packs swallow per-node import errors with `try/except` and still return success.
-During each pack load, this plugin captures stdout/stderr/logging and marks `partial` when strong signals appear (Traceback / ImportError / failed to load, etc.).
+```bash
+git clone https://github.com/rhinoflavored/ComfyUI_QBB_NodeOps.git
+```
 
-## 分类（QBB）
+使用**启动该 ComfyUI 的 Python** 安装 `requirements.txt`。Windows 便携版可在包含 `python_embeded` 和 `ComfyUI` 的目录执行：
 
-菜单路径：**QBB → NodeOps**
+```powershell
+.\python_embeded\python.exe -m pip install -r .\ComfyUI\custom_nodes\ComfyUI_QBB_NodeOps\requirements.txt
+```
 
-Future QBB plugins can use the same top-level menu:
+其他环境请用对应解释器执行 `-m pip install -r <插件目录>/requirements.txt`。额外依赖为 `Send2Trash`。
 
-- 菜单：`path: ["QBB", "YourPlugin"]`
-- Nodes: `CATEGORY = "QBB/YourPlugin"`
+重启 ComfyUI，刷新浏览器，通过顶栏入口或 **QBB → NodeOps** 打开。在运行 ComfyUI 的电脑上通过 `localhost` 或 `127.0.0.1` 访问；管理接口限制本机请求。从 LoadHighlight 升级时只保留一份插件目录，避免重复加载。
 
-## 语言
+## 版本记录与恢复
 
-Settings → `Comfy > Locale > Language`
+当前受管范围为 **ComfyUI 核心、插件、Python 包状态和 `extra_model_paths.yaml`**。模型、输入输出、工作流、`user` 和外部资源不在范围内，NodeOps 自身受保护。版本记录不等于整机备份。
 
-- Chinese (`zh` / `zh-CN` ...) → Chinese UI
-- Other locales → English UI
+1. 暂停工作流、更新、依赖安装和文件编辑，预览保存范围、排除项、备份缺口与空间需求，再确认保存。
+2. 选择记录，对比当前实例。默认**宽松模式**只核对名称，同名组件跳过；需要核对版本、来源和内部文件时切换**严格模式**。
+3. 核对新增、替换和删除项，检查并准备材料，再确认开始恢复。
+4. 打开独立恢复窗口后，**手动关闭原 ComfyUI**，等待恢复窗口提示完成，再用原启动脚本**手动启动 ComfyUI**。
+5. 查看结果；需要确认恢复后的内容时，重新执行严格对比并测试常用工作流。
 
-## API（主要接口）
+本地文件与可读取的 Python 安装文件可保存为带校验索引的组件 ZIP，内容对象按 SHA-256 复用。轻量 Git 记录可能仅保存来源和提交；缺失文件、共享文件冲突及解释器不兼容仍可能阻止恢复。
 
-- `GET /qbb_nodeops/report`
-- `GET /qbb_nodeops/failures`
-- `GET /qbb_nodeops/network_settings`
-- `POST /qbb_nodeops/network_settings`
-- `GET /qbb_nodeops/updates`
-- `POST /qbb_nodeops/updates/refresh`
-- `POST /qbb_nodeops/updates/pull` (`{ "path": "..." }` / `{ "paths": [...] }` / `{ "all": true }`)
-- `GET /qbb_nodeops/export?filename=...`
-- `GET /qbb_nodeops/environment?filename=...`
+恢复沿用已确认的对比计划，结果可能表示“操作已执行、未重新扫描环境”，不代表内部文件、GPU 或工作流已经验证一致。宽松模式完成也不代表版本一致。旧记录保留读取、对比和导出，恢复能力取决于实际保存的证据与材料。详见[使用指南](docs/usage.md)。
 
-## Notes
+## 使用前了解
 
-- Tracks `custom_nodes` packages only (not `comfy_extras` spam)
-- Skips highlighting itself
-- No extra pip dependencies
-- 插件搬家会先复制并保留原插件；只有在用户明确确认且迁移成功后才会删除源插件。
-- 新建便携式实例需要当前安装为 ComfyUI Portable；普通 Python 环境可以作为既有实例纳入管理与迁移。
+- 引用记录来自可识别的工作流提交；没有记录不代表从未使用，文件时间也不能单独作为删除依据。
+- 部分加载检测依据捕获的错误信号，是启发式判断。插件更新后需重启并测试工作流。
+- 新建实例与插件搬家相互独立。搬家不迁移模型或核心；安装依赖会改变目标环境。
+- AI 请求仅在主动操作时发起，可能发送日志、路径和依赖信息。密钥保存在本机配置中，未加密。
+- 网络支持直连、本地代理及 GitHub 镜像；镜像不替代 Python、PyPI、PyTorch 或 AI 下载源。
+
+## 更新与反馈
+
+在插件目录执行 `git pull --ff-only`，用 ComfyUI 的 Python 更新依赖，然后重启并刷新网页。存在本地修改时请先保留修改。
+
+反馈请附操作步骤、ComfyUI/Python 版本和完整错误，移除密钥、令牌和私人路径。不要上传本机配置、数据库或整个快照对象库。
+
+开发检查见[使用指南](docs/usage.md)。采用 [MIT 许可证](LICENSE)。

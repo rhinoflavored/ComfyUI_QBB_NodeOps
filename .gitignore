@@ -9,4 +9,13 @@ venv/
 *.egg-info/
 dist/
 build/
+
+# Legacy filename from before the NodeOps rename
 qbb_network_settings.json
+
+# Local plugin config, secrets, instance registry, and indexes
+qbb_nodeops_*.json
+qbb_nodeops_*.sqlite3
+qbb_nodeops_*.sqlite3-*
+record-tasks/
+restore-tasks/

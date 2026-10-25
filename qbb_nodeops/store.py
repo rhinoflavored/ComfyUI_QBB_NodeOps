@@ -3,6 +3,14 @@ from __future__ import annotations
 import re
 from dataclasses import asdict, dataclass, field
 from typing import Any
+from .diagnostics import classify
+
+
+def diagnostic_record(record):
+    data = asdict(record)
+    if record.needs_attention:
+        data['diagnosis'] = classify(data)
+    return data
 
 
 @dataclass
@@ -60,7 +68,7 @@ class LoadReport:
             "attention_count": len(self.attention_items),
             "failures": [asdict(r) for r in self.failures],
             "partials": [asdict(r) for r in self.partials],
-            "attention": [asdict(r) for r in self.attention_items],
+            "attention": [diagnostic_record(r) for r in self.attention_items],
             "records": [asdict(r) for r in self.records],
         }
 
@@ -202,7 +210,7 @@ def extract_partial_issues(captured_text: str) -> list[str]:
         key = issue.strip()
         if not key or key in seen:
             continue
-        if "QBB LoadHighlight" in key or "LOADING CUSTOM NODE" in key:
+        if "QBB NodeOps" in key or "QBB LoadHighlight" in key or "LOADING CUSTOM NODE" in key:
             continue
         seen.add(key)
         out.append(key)

@@ -22,6 +22,6 @@ from qbb_nodeops.hook import install  # noqa: E402
 # This runs before `nodes` and all custom nodes are imported, so a saved local
 # proxy is inherited by the whole ComfyUI process and later subprocesses.
 if apply_comfyui_process_proxy(load_settings()):
-    print("[ComfyUI_QBB_NodeOps] Applied saved proxy to the ComfyUI process", flush=True)
+    print("[QBB NodeOps] Applied saved proxy to the ComfyUI process", flush=True)
 
 install()

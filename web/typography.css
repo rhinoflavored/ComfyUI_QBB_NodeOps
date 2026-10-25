@@ -1,0 +1,34 @@
+/* Shared title hierarchy. Scoped to NodeOps, including detached dialogs.
+   Explicit priority prevents lazily loaded feature CSS changing the scale. */
+:root {
+  --qbb-font-ui: "Segoe UI", "Microsoft YaHei", "PingFang SC", system-ui, sans-serif;
+  --qbb-title-page: 24px;
+  --qbb-title-section: 18px;
+  --qbb-title-card: 16px;
+}
+:is(.qbb-workspace, .qbb-lh-export-modal, .qm-git-dialog, .qv-action-dialog) {
+  font-family: var(--qbb-font-ui);
+}
+:is(.qbb-workspace, .qbb-lh-export-modal, .qm-git-dialog, .qv-action-dialog) :is(h2,h3,h4,.qbb-page-heading,.qbb-resource-panel-title,.qm-title,.qv-record strong,.qbb-instance-home-card strong) {
+  font-family: var(--qbb-font-ui) !important;
+  font-weight: 600 !important;
+  line-height: 1.4 !important;
+  letter-spacing: normal !important;
+  overflow-wrap: anywhere;
+}
+.qbb-workspace :is(h2,.qbb-page-heading),
+.qbb-workspace .qbb-lh-instance-heading > strong {
+  font-family: var(--qbb-font-ui) !important;
+  line-height: 1.4 !important;
+  letter-spacing: normal !important;
+  font-size: var(--qbb-title-page) !important;
+  font-weight: 700 !important;
+}
+:is(.qbb-workspace,.qbb-lh-export-modal,.qm-git-dialog,.qv-action-dialog) h3,
+.qbb-workspace .qbb-resource-panel-title {
+  font-size: var(--qbb-title-section) !important;
+}
+:is(.qbb-workspace,.qbb-lh-export-modal,.qm-git-dialog,.qv-action-dialog) h4,
+.qbb-workspace :is(.qm-title,.qv-record strong,.qbb-instance-home-card strong) {
+  font-size: var(--qbb-title-card) !important;
+}

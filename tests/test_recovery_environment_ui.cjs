@@ -1,0 +1,20 @@
+const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path'),vm=require('node:vm');
+class E{constructor(tag){this.tag=tag;this.children=[];this.events={};}append(...n){this.children.push(...n);}setAttribute(k,v){this[k]=v;}addEventListener(k,f){this.events[k]=f;}}
+const context={document:{createElement:t=>new E(t)}};vm.createContext(context);
+vm.runInContext(fs.readFileSync(path.join(__dirname,'../web/recovery-environment.js'),'utf8').replace('export function','function'),context);
+const root=new E('div'),choices={},all=n=>[n,...n.children.flatMap(all)];let changes=0;
+const plan={runtime:{version:'3.11',architecture:'AMD64',method:'managed'},dependencies:[{name:'torch',key:'torch',version:'2.5+cu124',action:'pytorch'},...Array.from({length:80},(_,i)=>({name:'Local'+i,key:'local'+i,version:'1',action:'pending'}))]};
+context.renderRecoveryEnvironment(root,plan,choices,()=>changes++,zh=>zh);
+const byLabel=text=>all(root).find(n=>n['aria-label']===text),bulk=byLabel('依赖来源统一处理');
+assert.ok(all(root).filter(n=>n.tag==='details').every(n=>!n.open));assert.deepEqual(Object.keys(choices._environment.dependencies),[]);
+bulk.value='index';bulk.events.change();assert.equal(changes,1);assert.equal(Object.keys(choices._environment.dependencies).length,80);
+assert.equal(choices._environment.dependencies.local79.action,'pypi');assert.equal(choices._environment.dependencies.torch,undefined);
+assert.equal(byLabel('Local0依赖来源').value,'pypi');
+byLabel('Local0依赖来源').value='wheel';byLabel('Local0依赖来源').events.change();assert.equal(bulk.value,'custom');
+bulk.value='custom';bulk.events.change();assert.equal(all(root).find(n=>n.tag==='details').open,true);
+const input=all(root).filter(n=>n.tag==='input')[1];assert.equal(input.hidden,false);input.value='C:/local.whl';input.events.input();assert.equal(choices._environment.dependencies.local0.path,'C:/local.whl');
+bulk.value='skip';bulk.events.change();assert.equal(choices._environment.dependencies.local0.path,'');assert.equal(input.hidden,true);
+assert.equal(choices._environment.dependencies.torch,undefined);
+const offline=new E('div');context.renderRecoveryEnvironment(offline,{runtime:{method:'offline',version:'3.11',architecture:'AMD64'},dependencies:[]},{},()=>{},zh=>zh);
+assert.equal(all(offline).filter(n=>n.tag==='select').length,0);
+console.log('Grouped dependency choices, advanced overrides and offline behavior passed');

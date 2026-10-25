@@ -1,1 +1,1 @@
-# No extra pip dependencies. Uses ComfyUI / Python standard library only.
+Send2Trash>=1.8.3

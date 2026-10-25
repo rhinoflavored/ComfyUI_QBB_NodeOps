@@ -16,6 +16,13 @@ PLUGIN_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 _PATCHED = False
 _IMPORT_HOOKED = False
 _ORIGINAL_IMPORT = builtins.__import__
+_PATCH_MARK = "_qbb_nodeops_patched"
+_PATCH_ORIG = "_qbb_nodeops_original"
+_LEGACY_PATCH_MARK = "_qbb_loadhighlight_patched"
+
+
+def _is_patched(fn: Any) -> bool:
+    return bool(getattr(fn, _PATCH_MARK, False) or getattr(fn, _LEGACY_PATCH_MARK, False))
 
 
 def _display_name(module_path: str) -> str:
@@ -345,25 +352,25 @@ def patch_nodes_module(nodes_module: Any) -> bool:
         return False
 
     original = nodes_module.load_custom_node
-    if getattr(original, "_qbb_loadhighlight_patched", False):
+    if _is_patched(original):
         _PATCHED = True
         REPORT.hook_installed = True
         return True
 
     wrapped = _wrap_load_custom_node(original)
-    wrapped._qbb_loadhighlight_patched = True  # type: ignore[attr-defined]
-    wrapped._qbb_loadhighlight_original = original  # type: ignore[attr-defined]
+    setattr(wrapped, _PATCH_MARK, True)
+    setattr(wrapped, _PATCH_ORIG, original)
     nodes_module.load_custom_node = wrapped
 
     init_ext = getattr(nodes_module, "init_external_custom_nodes", None)
-    if callable(init_ext) and not getattr(init_ext, "_qbb_loadhighlight_patched", False):
+    if callable(init_ext) and not _is_patched(init_ext):
         # Keep identity wrap marker only; summary is deferred.
-        init_ext._qbb_loadhighlight_patched = True  # type: ignore[attr-defined]
+        setattr(init_ext, _PATCH_MARK, True)
 
     init_extra = getattr(nodes_module, "init_extra_nodes", None)
-    if callable(init_extra) and not getattr(init_extra, "_qbb_loadhighlight_patched", False):
+    if callable(init_extra) and not _is_patched(init_extra):
         wrapped_extra = _wrap_init_extra_nodes(init_extra)
-        wrapped_extra._qbb_loadhighlight_patched = True  # type: ignore[attr-defined]
+        setattr(wrapped_extra, _PATCH_MARK, True)
         nodes_module.init_extra_nodes = wrapped_extra
 
     _PATCHED = True

@@ -1,0 +1,11 @@
+const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path');
+const read=file=>fs.readFileSync(path.join(__dirname,'..',file),'utf8');
+const i18n=read('web/i18n.js'),ui=read('web/migrate.js');
+assert.ok(!i18n.includes('请关闭当前 ComfyUI'));
+assert.ok(!i18n.includes('Close this ComfyUI'));
+assert.ok(ui.includes('回收确认前不要关闭或重启当前 ComfyUI'));
+assert.ok(ui.includes('--port 8189'));
+assert.ok(ui.includes('回收完成后再重启来源实例'));
+assert.ok(ui.includes('confirmed:true,token:result.validation.recycle_token'));
+assert.ok(read('README.md').includes('确认前保持当前 ComfyUI 后台运行'));
+console.log('Recycling lifecycle guidance checks passed');

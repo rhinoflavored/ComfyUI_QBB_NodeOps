@@ -201,7 +201,7 @@ def print_summary(
 ) -> None:
     print("\n", flush=True)
     print_plugin_separator()
-    _safe_print("  QBB LoadHighlight SUMMARY", Ansi.BOLD, Ansi.BRIGHT_YELLOW)
+    _safe_print("  QBB NodeOps SUMMARY", Ansi.BOLD, Ansi.BRIGHT_YELLOW)
     _safe_print(
         f"  ok={success_count}  partial={partial_count}  failed={failure_count}  total_time={total_elapsed:.2f}s",
         Ansi.BOLD,

@@ -1,0 +1,41 @@
+/* NodeOps color tokens.
+   The workspace/dialog uses the original navy panel palette.
+   The top-bar button still follows ComfyUI so it does not clash with the host menu. */
+.qbb-nodeops-button-group,
+#qbb-nodeops-menu-btn {
+  --qbb-fg: var(--fg-color, #e9eef7);
+  --qbb-muted: var(--descrip-text, #999);
+  --qbb-border: var(--border-color, #4e4e4e);
+  --qbb-bg: var(--comfy-menu-bg, var(--bg-color, #202020));
+  --qbb-bg-raised: color-mix(in srgb, var(--qbb-fg) 8%, var(--qbb-bg));
+  --qbb-bg-sunken: color-mix(in srgb, var(--qbb-fg) 4%, var(--qbb-bg));
+  --qbb-accent: var(--primary-bg, var(--p-primary-color, #2787e9));
+  --qbb-accent-fg: var(--primary-fg, #fff);
+  --qbb-danger: var(--error-text, #ff6b6b);
+  --qbb-warn: #e6b84d;
+  --qbb-ok: #3c8a5a;
+  --qbb-radius: 8px;
+  color-scheme: inherit;
+}
+
+.qbb-lh-overlay,
+.qbb-lh-export-overlay {
+  --qbb-fg: #e9eef7;
+  --qbb-muted: #8fa0b8;
+  --qbb-border: #2a3a50;
+  --qbb-bg: #10151d;
+  --qbb-bg-raised: #172330;
+  --qbb-bg-sunken: #0c1219;
+  --qbb-accent: #2787e9;
+  --qbb-accent-fg: #fff;
+  --qbb-danger: #ff6b6b;
+  --qbb-warn: #e6b84d;
+  --qbb-ok: #3c8a5a;
+  --qbb-radius: 8px;
+  color-scheme: dark;
+}
+
+.qbb-muted { color: var(--qbb-muted); }
+.qbb-danger { color: var(--qbb-danger); }
+.qbb-warn { color: var(--qbb-warn); }
+.qbb-ok { color: var(--qbb-ok); }

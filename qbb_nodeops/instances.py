@@ -25,29 +25,97 @@ def _resolve_comfyui(raw: str | Path) -> Path:
     raise ValueError("path must be an existing ComfyUI folder containing custom_nodes")
 
 
+def _contains(child: Path, parent: Path) -> bool:
+    try:
+        child.resolve().relative_to(parent.resolve())
+        return True
+    except (ValueError, OSError):
+        return False
+
+
+def python_executable(home: Path) -> Path | None:
+    for relative in ("python.exe", "Scripts/python.exe", "bin/python3", "bin/python", "python3", "python"):
+        candidate = home / relative
+        if candidate.is_file():
+            return candidate
+    return None
+
+
+def _venv_home(executable: Path) -> Path | None:
+    for directory in (executable.parent, executable.parent.parent):
+        if (directory / "pyvenv.cfg").is_file():
+            return directory
+    return None
+
+
+def inspect_runtime(comfyui_root: Path, *, current: bool = False) -> dict[str, Any]:
+    """Describe how a ComfyUI tree is launched, without assuming a portable layout."""
+    root = _resolve_comfyui(comfyui_root)
+    parent = root.parent
+    bundled = (
+        (parent / "python_embeded", "Portable Python"),
+        (parent / "python", "Bundled Python"),
+    )
+    virtual = (
+        (parent / "python_env" / ".venv", "Independent Python environment"),
+        (root / ".venv", "Virtual environment"),
+        (root / "venv", "Virtual environment"),
+        (parent / ".venv", "Virtual environment"),
+        (parent / "venv", "Virtual environment"),
+    )
+
+    executable = Path(sys.executable).resolve() if current else None
+    python_home: Path | None = None
+    python_kind = "External / standard Python"
+    if executable is None:
+        for home, label in (*bundled, *virtual):
+            found = python_executable(home)
+            if found:
+                executable = found.resolve()
+                python_home = home.resolve()
+                python_kind = label
+                break
+    else:
+        python_kind = "Current Python"
+        for home, label in (*bundled, *virtual):
+            if home.is_dir() and _contains(executable, home):
+                python_home = home.resolve()
+                python_kind = label
+                break
+        if python_home is None:
+            python_home = _venv_home(executable)
+            if python_home is not None:
+                python_kind = "Virtual environment"
+
+    relocatable = bool(
+        python_home
+        and any(python_home == home.resolve() for home, _label in bundled if home.is_dir())
+        and not (python_home / "pyvenv.cfg").is_file()
+    )
+    portable = relocatable
+    separated = python_home == (parent / "python_env" / ".venv").resolve()
+    install_root = parent if portable or separated else root
+    return {
+        "comfyui_root": str(root),
+        "install_root": str(install_root),
+        "python_path": str(executable) if executable else "",
+        "python_kind": python_kind,
+        "python_home": str(python_home) if python_home else "",
+        "relocatable_python": relocatable,
+        "portable": portable,
+    }
+
+
 def _python_details(comfyui_root: Path, *, current: bool = False) -> tuple[str, str]:
-    portable_root = comfyui_root.parent
-    candidates: list[tuple[Path, str]] = [
-        (portable_root / "python_embeded" / "python.exe", "Portable Python"),
-        (portable_root / "python" / "python.exe", "Bundled Python"),
-        (comfyui_root / ".venv" / "Scripts" / "python.exe", "Virtual environment"),
-        (comfyui_root / "venv" / "Scripts" / "python.exe", "Virtual environment"),
-        (comfyui_root.parent / ".venv" / "Scripts" / "python.exe", "Virtual environment"),
-    ]
-    if current:
-        executable = Path(sys.executable).resolve()
-        return str(executable), "Current Python"
-    for executable, label in candidates:
-        if executable.is_file():
-            return str(executable), label
-    return "", "External / standard Python"
+    runtime = inspect_runtime(comfyui_root, current=current)
+    return runtime["python_path"], runtime["python_kind"]
 
 
 def describe_instance(comfyui_root: Path, *, instance_id: str, name: str, current: bool = False) -> dict[str, Any]:
     root = _resolve_comfyui(comfyui_root)
-    python_path, python_kind = _python_details(root, current=current)
+    runtime = inspect_runtime(root, current=current)
     try:
-        plugin_count = sum(1 for item in (root / "custom_nodes").iterdir() if item.is_dir() and not item.name.startswith("__"))
+        plugin_count = sum(1 for item in (root / "custom_nodes").iterdir() if (item.is_dir() or (item.is_file() and item.suffix == ".py")) and not item.name.startswith(("__", ".")))
     except OSError:
         plugin_count = 0
     return {
@@ -55,11 +123,14 @@ def describe_instance(comfyui_root: Path, *, instance_id: str, name: str, curren
         "name": name,
         "comfyui_root": str(root),
         "custom_nodes": str(root / "custom_nodes"),
-        "python_path": python_path,
-        "python_kind": python_kind,
-        "portable": (root.parent / "python_embeded").is_dir(),
+        "python_path": runtime["python_path"],
+        "python_kind": runtime["python_kind"],
+        "portable": runtime["portable"],
+        "relocatable_python": runtime["relocatable_python"],
+        "install_root": runtime["install_root"],
         "plugin_count": plugin_count,
         "current": current,
+        "available": True,
     }
 
 
@@ -82,21 +153,22 @@ def list_instances() -> list[dict[str, Any]]:
     with _LOCK:
         current = describe_instance(CURRENT_COMFYUI_ROOT, instance_id="current", name="Current ComfyUI", current=True)
         result = [current]
-        changed = False
-        valid: list[dict[str, str]] = []
         for entry in _load_saved():
+            raw = str(entry.get("comfyui_root") or "")
+            if not raw:
+                continue
+            instance_id = str(entry.get("id") or uuid.uuid5(uuid.NAMESPACE_URL, raw).hex)
+            name = str(entry.get("name") or Path(raw).name)
             try:
-                root = _resolve_comfyui(str(entry.get("comfyui_root") or ""))
+                root = _resolve_comfyui(raw)
                 if root == CURRENT_COMFYUI_ROOT.resolve():
-                    changed = True
                     continue
-                instance_id = str(entry.get("id") or uuid.uuid4().hex)
-                valid.append({"id": instance_id, "name": str(entry.get("name") or root.name), "comfyui_root": str(root)})
-                result.append(describe_instance(root, instance_id=instance_id, name=valid[-1]["name"]))
-            except Exception:
-                changed = True
-        if changed:
-            _save(valid)
+                result.append(describe_instance(root, instance_id=instance_id, name=name))
+            except (OSError, ValueError):
+                result.append({"id": instance_id, "name": name, "comfyui_root": raw,
+                               "current": False, "available": False,
+                               "unavailable_reason": "实例目录暂时无法访问，请检查磁盘连接、路径和访问权限。",
+                               "python_path": "", "python_kind": "", "plugin_count": None})
         return result
 
 
@@ -129,5 +201,7 @@ def remove_instance(instance_id: str) -> None:
 def get_instance(instance_id: str) -> dict[str, Any]:
     for instance in list_instances():
         if instance["id"] == instance_id:
+            if not instance.get("available", True):
+                raise ValueError(instance["unavailable_reason"])
             return instance
     raise ValueError("instance not found")

@@ -6,6 +6,9 @@ import json
 import os
 import threading
 from typing import Any
+from urllib.parse import urlsplit, urlunsplit
+
+from .folder_picker import is_loopback
 
 PLUGIN_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 SETTINGS_PATH = os.path.join(PLUGIN_ROOT, "qbb_nodeops_network_settings.json")
@@ -36,6 +39,35 @@ def _clamp_port(value: Any) -> int:
     return port
 
 
+def _normalize_proxy_host(value: Any) -> str:
+    host = str(value or "127.0.0.1").strip() or "127.0.0.1"
+    if not is_loopback(host):
+        raise ValueError("Proxy host must be localhost or 127.0.0.1")
+    return host
+
+
+def _normalize_mirror_prefix(value: Any) -> str:
+    prefix = str(value or DEFAULT_MIRROR_PREFIX).strip() or DEFAULT_MIRROR_PREFIX
+    parsed = urlsplit(prefix)
+    host = (parsed.hostname or "").lower()
+    if (
+        parsed.scheme != "https"
+        or not host
+        or parsed.username
+        or parsed.password
+        or parsed.query
+        or parsed.fragment
+        or "." not in host
+        or host == "github.com"
+        or host.endswith(".github.com")
+    ):
+        raise ValueError("Mirror prefix must be an https URL without credentials")
+    path = parsed.path or "/"
+    if not path.endswith("/"):
+        path += "/"
+    return urlunsplit(("https", parsed.netloc, path, "", ""))
+
+
 def _normalize(data: dict[str, Any] | None) -> dict[str, Any]:
     src = dict(_DEFAULTS)
     if isinstance(data, dict):
@@ -46,12 +78,9 @@ def _normalize(data: dict[str, Any] | None) -> dict[str, Any]:
     # proxy setting when reading legacy settings that have both set.
     if src["proxy_enabled"]:
         src["mirror_enabled"] = False
-    src["proxy_host"] = str(src.get("proxy_host") or "127.0.0.1").strip() or "127.0.0.1"
+    src["proxy_host"] = _normalize_proxy_host(src.get("proxy_host"))
     src["proxy_port"] = _clamp_port(src.get("proxy_port"))
-    prefix = str(src.get("mirror_prefix") or DEFAULT_MIRROR_PREFIX).strip() or DEFAULT_MIRROR_PREFIX
-    if not prefix.endswith("/"):
-        prefix += "/"
-    src["mirror_prefix"] = prefix
+    src["mirror_prefix"] = _normalize_mirror_prefix(src.get("mirror_prefix"))
     return src
 
 
@@ -66,8 +95,12 @@ def load_settings() -> dict[str, Any]:
                 with open(SETTINGS_PATH, "r", encoding="utf-8") as f:
                     data = json.load(f)
         except Exception as e:
-            print(f"[ComfyUI_QBB_NodeOps] Failed to read network settings: {e}", flush=True)
-        _CACHE = _normalize(data if isinstance(data, dict) else None)
+            print(f"[QBB NodeOps] Failed to read network settings: {e}", flush=True)
+        try:
+            _CACHE = _normalize(data if isinstance(data, dict) else None)
+        except ValueError as e:
+            print(f"[QBB NodeOps] Invalid network settings, using defaults: {e}", flush=True)
+            _CACHE = _normalize(None)
         return dict(_CACHE)
 
 
@@ -85,7 +118,7 @@ def save_settings(patch: dict[str, Any] | None) -> dict[str, Any]:
                 json.dump(current, f, ensure_ascii=False, indent=2)
                 f.write("\n")
         except Exception as e:
-            print(f"[ComfyUI_QBB_NodeOps] Failed to save network settings: {e}", flush=True)
+            print(f"[QBB NodeOps] Failed to save network settings: {e}", flush=True)
             raise
         _CACHE = current
         return dict(current)
@@ -97,7 +130,7 @@ def proxy_url(settings: dict[str, Any] | None = None) -> str | None:
         return None
     host = str(s.get("proxy_host") or "").strip()
     port = _clamp_port(s.get("proxy_port"))
-    if not host:
+    if not host or not is_loopback(host):
         return None
     return f"http://{host}:{port}"
 

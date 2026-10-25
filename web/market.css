@@ -1,0 +1,24 @@
+.qbb-market{color:var(--qbb-fg);container-type:inline-size;min-width:0}
+.qbb-market h2{margin:0;font-size:24px}.qbb-market h3{font-size:19px;margin:20px 0 10px}.qbb-market h4{margin-bottom:8px}.qbb-market p{line-height:1.6}
+.qm-header,.qm-toolbar,.qm-row{display:flex;align-items:center;justify-content:space-between;gap:12px}.qm-header{margin-bottom:20px;flex-wrap:wrap}.qm-header p{margin:6px 0 0}
+.qm-muted{color:var(--qbb-muted);font-size:12px}.qm-search{display:flex;gap:10px;margin-bottom:14px}.qm-search input,.qm-detail input{box-sizing:border-box;width:100%;min-width:0;background:var(--qbb-bg-sunken);color:var(--qbb-fg);border:1px solid var(--qbb-border);border-radius:9px;padding:13px;font-size:14px}.qm-search input{flex:1}.qm-search button{background:var(--qbb-accent);color:var(--qbb-accent-fg);border-color:var(--qbb-accent)}
+.qm-tags{display:flex;gap:7px;flex-wrap:wrap;margin:10px 0}.qm-tags button[aria-pressed=true]{background:color-mix(in srgb, var(--qbb-accent) 18%, var(--qbb-bg));border-color:var(--qbb-accent)}.qm-badge{background:var(--qbb-bg-raised);color:var(--qbb-muted);border-radius:5px;padding:3px 7px;font-size:11px}
+.qm-settings{margin:16px 0;color:var(--qbb-muted);font-size:12px;border-bottom:1px solid var(--qbb-border);padding-bottom:14px}.qm-settings summary{cursor:pointer}.qm-settings label{display:block;margin:12px 0}.qm-settings button{margin:4px 8px 4px 0}
+.qm-toolbar{margin:20px 0 8px;font-size:13px}.qm-toolbar select{background:var(--qbb-bg-sunken);color:var(--qbb-fg);border:1px solid var(--qbb-border);padding:8px;border-radius:7px}
+.qm-layout{display:grid;grid-template-columns:minmax(0,1fr);gap:18px;align-items:start}.qm-layout.has-detail{grid-template-columns:minmax(0,1fr) minmax(260px,38%)}
+.qm-result{border-bottom:1px solid var(--qbb-border);padding:18px 4px;min-width:0}.qm-result:first-child{padding-top:6px}.qm-title{display:block;text-align:left;background:none;border:0;color:var(--qbb-accent);font-size:17px;font-weight:650;cursor:pointer;padding:0;margin-bottom:5px;overflow-wrap:anywhere}.qm-title:hover{text-decoration:underline}.qm-description{font-size:13px;color:var(--qbb-muted);margin:10px 0;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}.qm-row{margin-top:12px;flex-wrap:wrap}
+.qm-detail{position:sticky;top:0;background:var(--qbb-bg-raised);border:1px solid var(--qbb-border);border-radius:12px;padding:18px;overflow-wrap:anywhere;max-height:65vh;overflow:auto;font-size:13px}.qm-detail[hidden]{display:none}.qm-detail a{color:var(--qbb-accent)}.qm-notice{border-left:3px solid var(--qbb-warn);padding:10px;background:color-mix(in srgb, var(--qbb-warn) 10%, var(--qbb-bg));color:var(--qbb-fg)}.qm-empty{padding:32px 10px;text-align:center;color:var(--qbb-muted)}
+@container(max-width:650px){.qm-layout.has-detail{grid-template-columns:minmax(0,1fr)}.qm-detail{position:relative;grid-row:1;max-height:55vh}.qm-header{align-items:flex-start}.qm-search input{font-size:13px}}
+.qm-tag-group { border:1px solid var(--qbb-border); border-radius:8px; padding:10px 14px; }
+.qm-tag-group>summary { cursor:pointer; color:var(--qbb-fg); font-size:14px; }
+.qm-tag-group[open] { flex-basis:100%; background:var(--qbb-bg-raised); }
+.qm-tag-options { display:flex; flex-wrap:wrap; gap:8px; margin-top:12px; }
+.qm-tag-options button[aria-pressed="true"] { border-color:var(--qbb-accent); color:var(--qbb-accent); }
+.qm-all-tag-options { flex-basis:100%; padding-top:12px; border-top:1px solid var(--qbb-border); }
+.qm-tags>button[aria-pressed="true"] { border-color:var(--qbb-accent); color:var(--qbb-accent); }
+.qm-git-dialog{position:fixed;inset:0;margin:auto;width:min(520px,calc(100vw - 48px));max-height:calc(100vh - 48px);box-sizing:border-box;overflow:auto;padding:24px;border:1px solid var(--qbb-border);border-radius:14px;background:var(--qbb-bg-raised);color:var(--qbb-fg);font:inherit}
+.qm-git-dialog::backdrop{background:rgb(0 0 0 / 55%)}
+.qm-git-dialog h3{margin:0 0 20px;font-size:20px}
+.qm-git-dialog input{box-sizing:border-box;width:100%;padding:13px;border:1px solid var(--qbb-border);border-radius:8px;background:var(--qbb-bg-sunken);color:var(--qbb-fg);font:inherit}
+.qm-git-dialog input:focus-visible{outline:2px solid var(--qbb-accent);outline-offset:2px}
+.qm-git-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:20px}

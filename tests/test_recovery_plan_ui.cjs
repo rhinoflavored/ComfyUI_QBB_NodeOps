@@ -1,0 +1,24 @@
+const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path'),vm=require('node:vm');
+class E{constructor(tag){this.tag=tag;this.children=[];this.events={};}append(...n){this.children.push(...n);}setAttribute(k,v){this[k]=v;}addEventListener(k,f){this.events[k]=f;}}
+const context={document:{createElement:t=>new E(t)}};vm.createContext(context);
+vm.runInContext(fs.readFileSync(path.join(__dirname,'../web/recovery-plan.js'),'utf8').replace('export function','function'),context);
+const root=new E('div'),choices={},all=n=>[n,...n.children.flatMap(all)];let changes=0;
+const plan={repositories:[{id:'core',name:'Core',core:true,gap:'missing',action:'pending',target:'ComfyUI'},...Array.from({length:100},(_,i)=>({id:'p'+i,name:'Plugin'+i,gap:'missing',action:'pending',target:'plugins/'+i})),{id:'ok',name:'Healthy',action:'recorded',target:'healthy'}],pins:['test==1']};
+context.renderRecoveryPlan(root,plan,choices,()=>changes++,zh=>zh);
+const byLabel=text=>all(root).find(n=>n['aria-label']===text);
+const bulk=byLabel('缺失插件统一处理');assert.equal(bulk.value,'pending');assert.deepEqual(choices,{});
+assert.ok(all(root).filter(n=>n.tag==='details').every(n=>!n.open));
+assert.ok(!byLabel('Core恢复方式').children.some(n=>n.value==='skip'));
+bulk.value='current';bulk.events.change();assert.equal(changes,1);
+assert.equal(Object.keys(choices).length,100);assert.equal(choices.p99.action,'current');assert.equal(choices.core,undefined);assert.equal(choices.ok,undefined);
+assert.equal(byLabel('Plugin0恢复方式').value,'current');
+const individual=byLabel('Plugin0恢复方式');individual.value='backup';individual.events.change();assert.equal(bulk.value,'custom');
+const advanced=all(root).find(n=>n.tag==='details'&&n.children[0].textContent==='高级：查看插件清单或单独调整');
+bulk.value='custom';bulk.events.change();assert.equal(advanced.open,true);assert.equal(choices.p0.action,'backup');
+bulk.value='skip';bulk.events.change();assert.equal(choices.p0.action,'skip');assert.equal(choices.p0.path,'');assert.equal(advanced.open,false);
+assert.equal(choices.core,undefined);assert.equal(choices.ok,undefined);
+assert.ok(all(root).filter(n=>n.tag==='input').every(n=>n.hidden));
+const rerender=new E('div');context.renderRecoveryPlan(rerender,plan,choices,()=>changes++,zh=>zh);
+assert.equal(all(rerender).find(n=>n['aria-label']==='缺失插件统一处理').value,'skip');
+assert.ok(all(root).some(n=>n.textContent==='test==1'));
+console.log('Grouped plugin choices, collapsed details and core isolation passed');

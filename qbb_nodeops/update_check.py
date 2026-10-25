@@ -11,8 +11,10 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import asdict, dataclass, field
 from datetime import datetime
 from typing import Any
+from urllib.parse import urlsplit
 
 from .settings import load_settings, network_mode, proxy_url
+from .git_tools import require_git
 
 PLUGIN_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 
@@ -93,6 +95,9 @@ def _git_env(settings: dict[str, Any] | None = None) -> dict[str, str]:
     env["GIT_TERMINAL_PROMPT"] = "0"
     env["GCM_INTERACTIVE"] = "never"
     px = proxy_url(settings)
+    for key in list(env):
+        if key.lower() in ("http_proxy", "https_proxy", "all_proxy", "no_proxy"):
+            env.pop(key, None)
     if px:
         env["http_proxy"] = px
         env["https_proxy"] = px
@@ -101,6 +106,7 @@ def _git_env(settings: dict[str, Any] | None = None) -> dict[str, str]:
         env["ALL_PROXY"] = px
         env["all_proxy"] = px
     else:
+        env["NO_PROXY"] = "*"
         # Ensure we don't accidentally inherit a broken system proxy when using mirror/direct
         for key in (
             "http_proxy",
@@ -131,18 +137,18 @@ def _github_https_url(url: str) -> str:
         if not path.endswith(".git"):
             path += ".git"
         return f"https://github.com/{path}"
-    if "github.com" in url.lower():
-        url = url.replace("git://github.com", "https://github.com")
-        if url.startswith("http://github.com"):
-            url = "https://" + url[len("http://") :]
-        return url
+    parsed = urlsplit(url.replace("git://github.com", "https://github.com", 1) if "github.com" in url.lower() else url)
+    host = (parsed.hostname or "").lower()
+    if host == "github.com" and parsed.scheme in ("http", "https"):
+        path = parsed.path or ""
+        return f"https://github.com{path}"
     return url
 
 
 def _apply_mirror(url: str, settings: dict[str, Any] | None = None) -> str:
     s = settings or load_settings()
     raw = _github_https_url(url)
-    if not raw or "github.com" not in raw.lower():
+    if (urlsplit(raw).hostname or "").lower() != "github.com":
         return url
     if network_mode(s) != "mirror":
         return raw
@@ -173,13 +179,23 @@ def _run_git(
     settings: dict[str, Any] | None = None,
     timeout: int | None = None,
 ) -> tuple[int, str, str]:
+    try:
+        executable = require_git()
+    except ValueError as exc:
+        return 127, '', str(exc)
     s = settings or load_settings()
     mode = network_mode(s)
     to = timeout if timeout is not None else _git_timeout(mode)
     env = _git_env(s)
+    proxy = proxy_url(s) if mode == "proxy" else ""
+    options = ["-c", "core.hooksPath=", "-c", f"http.proxy={proxy or ''}",
+               "-c", f"https.proxy={proxy or ''}", "-c", f"remote.origin.proxy={proxy or ''}"]
+    for argument in args:
+        if argument.startswith(("https://", "http://")):
+            options.extend(["-c", f"http.{argument}.proxy={proxy or ''}"])
     try:
         proc = subprocess.run(
-            ["git", *args],
+            [executable, *options, *args],
             cwd=cwd,
             capture_output=True,
             text=True,
@@ -372,6 +388,7 @@ def run_update_check(*, force: bool = False) -> UpdateReport:
     )
 
     try:
+        require_git()
         with ThreadPoolExecutor(max_workers=_MAX_WORKERS) as pool:
             futures = {pool.submit(check_one, name, path): name for name, path in plugins}
             for fut in as_completed(futures):
@@ -386,9 +403,11 @@ def run_update_check(*, force: bool = False) -> UpdateReport:
         skipped = [i for i in items if i.skipped]
         errors = [i for i in items if i.error and not i.skipped and not i.has_update and not i.remote_sha]
 
+        successful = sum(1 for item in items if item.remote_sha and not item.error and not item.skipped)
+        status = "error" if not successful else "partial" if errors else "done"
         done = UpdateReport(
-            status="done",
-            message="ok",
+            status=status,
+            message=(f"Checked successfully: {successful}; failed: {len(errors)}; skipped: {len(skipped)}" if status != "done" else "ok"),
             started_at=report.started_at,
             finished_at=_now(),
             checked=len(items) - len(skipped),
@@ -628,6 +647,10 @@ def pull_many(paths: list[str] | None = None) -> dict[str, Any]:
 
     try:
         targets: list[str] = []
+        try:
+            require_git()
+        except ValueError as exc:
+            return {"ok": False, "error": str(exc), "results": []}
         if paths:
             targets = [str(p).strip() for p in paths if str(p).strip()]
         else:

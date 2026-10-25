@@ -1,0 +1,20 @@
+const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path'),vm=require('node:vm');
+class Element{constructor(tag){this.tag=tag;this.children=[];this.events={};this.textContent='';}append(...n){this.children.push(...n);}replaceChildren(){this.children=[];}addEventListener(k,f){this.events[k]=f;}}
+const context={document:{createElement:t=>new Element(t),createTextNode:t=>Object.assign(new Element('text'),{textContent:t})}};vm.createContext(context);
+vm.runInContext(fs.readFileSync(path.join(__dirname,'../web/recovery-task.js'),'utf8').replace('export function','function'),context);
+const host=new Element('div'),all=n=>[n,...n.children.flatMap(all)];let resumed=null;
+context.renderRecoveryTask(host,{phases:{dependencies:{status:'failed',attempt:2,error:'test failure'}},path_notes:[{kind:'relocated',field:'models',from:'old',to:'.'},{kind:'external',field:'loras',path:'shared'}]},zh=>zh,()=>{});
+assert.ok(all(host).some(n=>n.textContent.includes('尝试 2')));
+assert.ok(all(host).some(n=>n.textContent.includes('模型路径已适配')));
+assert.ok(all(host).some(n=>n.textContent.includes('请核对外部模型路径')));
+context.renderRecoveryTask(host,{integrity:{files:'passed',dependencies:'passed',startup:'not_checked',workflow:'not_checked',has_gaps:true}},zh=>zh,()=>{});
+assert.ok(all(host).some(n=>n.textContent==='文件、目录与权限 · 通过'));
+assert.ok(all(host).some(n=>n.textContent==='启动初始化 · 未验证'));
+assert.ok(all(host).some(n=>n.textContent==='指定工作流 · 未验证'));
+assert.ok(all(host).some(n=>n.textContent.includes('不代表完整环境已恢复')));
+context.renderRecoveryTask(host,{id:'job',can_resume:true,items:[{name:'plugin',status:'failed',error:'offline'}]},zh=>zh,async id=>{resumed=id;});
+const button=all(host).find(n=>n.tag==='button'),checkbox=all(host).find(n=>n.tag==='input');
+assert.equal(button.disabled,true);checkbox.checked=true;checkbox.events.change();assert.equal(button.disabled,false);
+(async()=>{await button.onclick();assert.equal(resumed,'job');assert.ok(all(host).some(n=>n.textContent.includes('失败，可重试')));
+context.renderRecoveryTask(host,{can_resume:false,items:[{name:'ok',status:'restored',reused:true}]},zh=>zh,()=>{});
+assert.ok(!all(host).some(n=>n.tag==='button'));assert.ok(all(host).some(n=>n.textContent.includes('检查点校验通过')));console.log('Recovery resume UI checks passed');})();

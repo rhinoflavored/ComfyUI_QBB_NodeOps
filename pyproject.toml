@@ -1,10 +1,10 @@
 [project]
 name = "qbb-nodeops"
-description = "QBB NodeOps: inspect custom-node loading, updates, dependencies, and safely migrate selected nodes to a new portable ComfyUI environment."
+description = "ComfyUI plugin diagnostics, resource management, version records, instance creation, plugin migration and marketplace."
 version = "2.1.0"
 license = { file = "LICENSE" }
-requires-python = ">=3.9"
-dependencies = []
+requires-python = ">=3.11"
+dependencies = ["Send2Trash>=1.8.3"]
 classifiers = [
     "Operating System :: OS Independent",
 ]
